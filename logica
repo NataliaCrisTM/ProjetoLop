@@ -1,0 +1,171 @@
+function preload() {
+  
+}
+var pri
+var seg
+var cont = 0
+var cartasValor = ['Queso', 'Queijo', 'Mora', 'Amora', 'Escalera', 'Escada', 'Mango', 'Manga', 'Helado', 'Sorvete', 'Silla', 'Cadeira', 'Perrito Quente', 'Cachorro Quente', 'Manzana', 'Maçã']
+
+//var cartasComparacao = ['1', '1', '2', '2', '3', '3', '4', '4', '5', '5', '6', '6', '7', '7', '8', '8']
+let cartas = []
+
+
+const numLinhas = 4
+const numColunas = 4
+
+let versoImage
+let frenteImage = []
+let frenteImage1 = []
+
+let imagesDeck = []
+let flippedCartas = []
+let delayStartFC = null
+
+let numTent = 0
+
+
+// Tile Object
+// --------------------------
+class Carta {
+  constructor(x, y, faceUpImage) {
+    this.x = x
+    this.y = y
+    this.width = 100
+    this.versoImage = versoImage
+    this.faceUpImage = faceUpImage
+    this.isFaceUp = false
+  }
+
+  render() {
+    fill(0, 0, 0)    
+    rect(this.x, this.y, this.width, this.width)
+
+    if (this.isFaceUp === true) {
+      image(this.faceUpImage, this.x, this.y, this.width, this.width)
+    } else {
+      image(this.versoImage, this.x, this.y, 100, 100)
+    }
+  }
+
+  setIsFaceUp(isFaceUp) {
+    this.isFaceUp = isFaceUp
+  }
+
+  isUnderMouse(x, y) {
+    return x >= this.x && x <= this.x + this.width  &&
+      y >= this.y && y <= this.y + this.width
+  }
+}
+
+// Game functions
+// --------------------------
+function createCartas() {
+  for (let i = 0; i < numColunas; i++) {
+    for (let j = 0; j < numLinhas; j++) {
+      cartas.push(new Carta(i * 100 + 50, j * 100+30, imagesDeck.pop()))
+    }
+  }
+}
+
+function updateGameLogic() {
+  if (delayStartFC && (frameCount - delayStartFC) > 30) {
+    for (let i = 0; i < cartas.length; i++) {
+      if (!cartas[i].isMatch && cartas[i].isFaceUp) {
+        cartas[i].setIsFaceUp(false)
+      }
+    }
+    flippedCartas = []
+    delayStartFC = null
+  }
+}
+
+
+function loadfrenteImage() {
+   frenteImage[0] = loadImage("facil/1.png")
+   frenteImage[1] = loadImage("facil/2.png")
+   frenteImage[2] = loadImage("facil/3.png")
+   frenteImage[3] = loadImage("facil/4.png")
+   frenteImage[4] = loadImage("facil/5.png")
+   frenteImage[5] = loadImage("facil/6.png")
+   frenteImage[6] = loadImage("facil/7.png")
+   frenteImage[7] = loadImage("facil/8.png")
+}
+
+/*function loadfrenteImage1() {
+   frenteImage1[0] = loadImage("facil/1.1.png")
+   frenteImage1[1] = loadImage("facil/2.1.png")
+   frenteImage1[2] = loadImage("facil/3.1.png")
+   frenteImage1[3] = loadImage("facil/4.1.png")
+   frenteImage1[4] = loadImage("facil/5.1.png")
+   frenteImage1[5] = loadImage("facil/6.1.png")
+   frenteImage1[6] = loadImage("facil/7.1.png")
+   frenteImage1[7] = loadImage("facil/8.1.png")
+  
+}*/
+
+function createImagesDeck(images) {
+  for (let i = 0; i < frenteImage.length; i++) {
+    imagesDeck.push(images[i])
+    imagesDeck.push(images[i])
+  }
+
+  imagesDeck.sort(function() {
+    return 0.5 - random()
+  })
+}
+
+function drawScoringMessage() {
+  let foundAllMatches = true
+
+  for (let i = 0; i < cartas.length; i++) {
+    foundAllMatches = foundAllMatches && cartas[i].isMatch
+  }
+
+  if (foundAllMatches) {
+    fill(255, 255, 255)
+    text("Você encontrou todos em " + numTent + " tentativas", 20, 360)
+  }
+}
+
+// p5.js functions
+// --------------------------
+function setup() {
+  createCanvas(500, 500)
+
+  versoImage = loadImage("fundoCarta.png")
+  loadfrenteImage()
+
+  createImagesDeck(frenteImage) 
+  createCartas()
+}
+
+function draw() {
+  updateGameLogic()
+
+  for (let i = 0; i < cartas.length; i++) {
+    cartas[i].render()
+  }
+
+  drawScoringMessage()
+}
+
+function mouseClicked() {
+  for (let i = 0; i < cartas.length; i++) {
+    if (cartas[i].isUnderMouse(mouseX, mouseY)) {
+      if (flippedCartas.length < 2 && !cartas[i].isFaceUp) {
+        cont ++
+        cartas[i].setIsFaceUp(true)
+        flippedCartas.push(cartas[i])
+        if (flippedCartas.length === 2) {
+          numTent++
+          
+          if (flippedCartas[0].faceUpImage === flippedCartas[1].faceUpImage) {
+            flippedCartas[0].isMatch = true
+            flippedCartas[1].isMatch = true
+          }
+          delayStartFC = frameCount
+        }
+      }
+    }
+  }
+}
